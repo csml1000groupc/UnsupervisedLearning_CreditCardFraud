@@ -1,0 +1,1351 @@
+---
+title: 'Unsupervised learning approach to Credit card Fraud '
+author: 'Joshua Dalphy, Choongil Kim, Gouri Kulkarni, Jinping Bai '
+date: "October 28, 2020"
+output:
+  pdf_document: null
+  number_sections: yes
+  toc: yes
+  toc_depth: 4
+  fig_width: 5
+  fig_height: 4
+  word_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r message=FALSE, warning=FALSE}
+```
+ 
+```{r setup, include=FALSE}
+
+
+library(Hmisc)
+library(knitr)
+library(tidyverse)
+library(ggplot2) 
+library(gridExtra)
+library(mice)  
+library(corrplot)
+library(pROC)
+library(png) 
+library(xtable)
+library(caret)
+library(dplyr)
+library(reshape2)
+library(arules)
+library(randomForest)
+library(ggthemes)
+library(scales)
+library(rpart)
+library(class)
+library(ROSE)
+library(rpart)
+library(rpart.plot)
+library(rattle)
+library(car)
+library(e1071)
+library(tinytex)
+library(fpc)
+library(data.table)
+
+
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+
+# Business Introduction
+
+## Background
+
+
+What is Fraud ?
+Fraud is the intentional perversion of truth in order to induce another to part with something of value or to surrender a legal right, an act of deceiving or misrepresenting, a wrongful or criminal deception intended to result in financial or personal gain.
+A fraudulent person is one who is not what he or she pretends to be.
+
+Day by day, we are becoming an increasingly cashless society.
+The World Payments Report from Capgemini is the leading source for data, trends and insights on global and regional non-cash payments, the key regulatory and industry initiatives (KRIIs), and today’s dynamic payments environment.
+The number of consumers who make 51–100% of monthly purchases via e-commerce nearly doubled during the pandemic, and the transition from retail to e-commerce will continue even after the virus has been contained.
+
+Banks that offer a seamless, secure, and speedy digital interface will see a positive impact on revenue, while those that don’t will erode value and potentially lose business. Modern banking demands faster risk decisions (such as real-time payments) so banks must strike the right balance between managing fraud and handling authorized transactions instantly.
+
+Undetected fraud is becoming costlier day by day due to the increasing number of non cash transactions.
+
+One of the drivers of cyber crime is to gain and misuse credit card information. 
+With the growing number of threats from vulnerabilities such as new technologies and increasing transaction volumes, credit card issuers need to obtain a complete view of financial crime as it evolves. 
+
+Banks and credit card companies take fraud very seriously, and have highly sophisticated security systems and teams of experts in place to monitor transactions, protect customers and prevent and detect credit card fraud.
+In response to fraud, the bank must:
+
+-identify and authenticate the customer
+
+-monitor and detect transactions and behavioral anomalies
+
+-respond to and mitigate risks and issues
+
+Credit card issuers need to detect fraud almost in realtime and report it to the cardholder.
+
+There is competition among banks in being the fastest and best at promptly reporting fraud to the cardholder and being more effective in preventing future fraudulent activities by taking appropriate action. 
+
+
+Credit card issuers offer complimentary fraud detection services to proactively notify clients of potential fraud to your account.
+Also they need to come up with fraud detection and prevention plans.
+
+Data mining techniques have been used for suspicious transaction monitoring for years.
+However, with the growing number of transactions, the volume of data that needs to be ingested, understood, analyzed and modeled is also increasing.
+New trends arise by the hour and the number of dimensions that need to be addressed is forever changing.
+
+Clustering techniques have been widely used fo detecting fraud.
+Clusters formed after analysis can identify transactions which are low risk, high risk, extremely risky and so on which can be inputs for the credit card issuer to apply to systems and tools to communicate to the client.
+
+
+An example of a red flag could be an online purchase made at a merchant in another country if the client does not have prior such history.
+In terms of transactions, an outlier is an observation which is different from others and generates suspicion -is it genuine, or a fradulent transacton.
+Unlike supervised learning our concern is not the history of the data, but observations which are different from normal observations.
+ 
+
+Clustering
+
+Clustering is the process of grouping a set of data objects into multiple groups of clusters so that objects within a cluster have high similarity , but are very dissimilar to objects in other clusters.
+Dissimilarities and similarities are assesses based on the attribute values describing the objects and often involve distance or other measures.
+The goal is to discover groupings.
+
+Different clustering methods can result in different clustering outputs of the same dataset.
+
+Clustering can be used to gain insight into data distribution , observe characteristics of each cluster and focus on a particular set of clusters for further analysis.
+Or, it can be a preprocessing step for other algorithms.
+Another name for clustering is automatic classification, or data segmentation.
+When used for outlier detection, where outliers may be more interesting than common cases. Credit card fraud detection is an example use case of outlier detection.
+
+
+Requirements of clustering algorithms 
+
+When used to solve business problem, clustering algorithms should be:
+
+-scalable to changing dataset sizes 
+
+-able to deal with increasing attributes 
+
+-ability to visualize clusters of various shapes 
+
+-domain knowledge and understanding of the business 
+
+-ability to deal with noisy data 
+
+-ability to perform incremental clustering, insensitivity to input order
+
+-ability to cluster highly dimensional data 
+
+-ability to satisfy constraints 
+
+-interpretability and usability
+
+-partitioning criteria
+
+-separation of clusters 
+
+-ability to measure similarity 
+
+-ability to define cluster subspaces
+
+Clustering algorithms that address these points can provide meaningful insights.
+
+
+Clustering methods
+
+
+Partitioning methods are mostly distance based. 
+They construct k partitions(clusters)  of the data from n objects (dataset observations)
+k-means , k-medoids are examples of algorithms using partitioning methods and are demonstrated here.
+They can be used to find mutually exclusive clusters of spherical shape and may
+use cluster centers.
+They work well on small to medium sized data sets.
+The starting point is the number of clusters. 
+The partitioning algorithm organizes the objects into k partitions (k<= n) where each partition represents a cluster. 
+
+
+Evaluation of clustering analysis methods 
+
+After having tried out clustering on a dataset, how do we evaluate whether the clustering results are good?
+
+Evaluation goals: 
+
+-assess clustering tendency : does a non random structure exist in the data?
+Clusters obtained from blindly applying a clustering method on a dataset will return misleading clusters 
+Hopkins statistic : given a dataset D, how far is a random variable from being uniformly distributed in the data space 
+If h >.5, then it is unlikely that the dataset has statistically significant clusters
+
+-determine the number of clusters in the dataset 
+estimating the optimum number of clusters before using the clustering algorithm
+determining the right number of clusters depends on the distribution shape, scale, and clustering resolution required.
+1.Elbow method - increasing the number of clusters can help reduce the sum of within cluster variance of each cluster.
+The turning point of the curve of the sum of within -cluster variances is used 
+2.Cross validation method :divide the dataset into m parts , use m-1 parts to build a clustering model , use the remaining part to test the quality of the cluster.
+
+-measure cluster quality 
+How well do the clusters fit the dataset?
+How well do the clusters match the ground truth?
+
+
+-cluster scores comparing two clustering results on the same dataset. 
+We examine how well the clusters are separated and how compact the clusters are. 
+The silhoutte coefficient uses the average distance between each object and all other objects in the cluster , It lies between -1 and 1. 
+The average silhoutte coefficient value of all objects in the dataset can be used to measure the quality of a clustering. 
+
+
+Clustering methods used for more than 10 dimensions are :
+
+1.subspace clustering 
+
+2.dimensionality reduction 
+
+We have attempted to demonstrate dimensionality reduction here.
+
+In our case, we want to cluster transactions based on attributes. 
+
+A transaction is a vector of attributes.
+Our dataset has 31 attributes.
+
+
+As the number of dimensions increases , noise increases. 
+Clusters created using traditional distance measures may not be meaningful 
+for high dimensional data.
+
+We use the following approaches on data with higher dimensions:
+
+-subspaces 
+
+-dimensionality reduction 
+
+
+Subspace clustering methods search for clusters with a similarity that is measured using conventional metrics such as distance or density 
+
+Correlation based clustering methods use PCA. They apply PCA to derive a set of new , uncorrelated dimensions. 
+ 
+ 
+With Biclustering methods, the transaction-attributes matrix can be analyzed in two dimensions, the transaction dimension and characteristics dimension
+
+1. treating each transaction as an object and characteristic as attribute, we can find groups of transactions that have similar characteristics
+
+2. using the characteristics as objects and transactions as attributes, we can find groups of characteristics and the transaction that fall within them 
+
+ \newpage
+ 
+
+# Data Understanding
+
+The data set for this project was obtained from the data.world website,  https://data.world/raghu543/credit-card-fraud-data
+
+The datasets contains transactions made by credit cards in September 2013 by European cardholders.
+This dataset presents transactions that occurred in two days, where we have 492 frauds out of 284,807 transactions.
+The dataset is highly unbalanced, the positive class (frauds) account for 0.172% of all transactions.
+
+It contains only numerical input variables which are the result of a PCA transformation.
+
+PCA used for dimension reduction consists of the following steps: 
+
+1. data is standardised , normalized 
+
+2. calculate covariance matrix
+
+3. calculate eigen vectors
+
+4. sort eigen vectors
+
+5. select the first k eigen vectors which will be the new k dimensions 
+
+Due to confidentiality issues, we do not have the original features and background information about the data.
+The labeled variables are Time, Amount and Class.
+V1 -V28 variables are anonymized to protect sensitive user information. 
+We do not know the labels for these variables. 
+
+The input data has been collected over a short period of two days and sent for analysis.
+
+
+Class identifies a transaction as Normal or Fraudulent and could be the output of prior supervised learning.
+
+Amount is the amount of the transaction.
+
+
+\newpage
+
+# Data Exploration
+
+
+
+```{r }
+
+#cc_data = read.csv(file.choose(), header = TRUE, na.strings = c("NA","","#NA"))
+cc_data = read.csv("creditcard.csv")
+setDT(cc_data)
+
+#When working on large lists or data.frames, it might be both time and memory consuming to convert them to a data.table using as.data.table(.), as this will make a complete copy of the input object before to convert it to a data.table. The setDT function takes care of this issue by allowing to convert lists - both named and unnamed lists and data.frames by reference instead. That is, the input object is modified in place, no copy is being made.
+
+#View(cc_data)
+
+
+```
+
+
+
+The dimensions of the dataset 
+
+```{r echo=FALSE}
+
+dim(cc_data)
+
+
+```
+
+Explore the types of each variable 
+
+```{r echo=FALSE}
+
+
+str(cc_data)
+
+#get the class of each variable 
+#sapply(cc_data, class) 
+
+
+```
+
+
+\newpage
+
+## Raw data understaing
+
+We have now  looked at our raw data and are ready to explore the data 
+
+
+Variable Exploration
+
+Explore the frequency of Class ( Normal / Fraud )
+
+```{r}
+hist(cc_data$Class)
+
+```
+
+
+Most transactions are not fraudulent, only a few are fraudulent.
+However, not indentifying the fraudulent cases in time puts the card issuer at risk for fraud liability and can cost the card issuer millions of dollars.
+
+
+
+\newpage
+
+
+Time : Most transactions happen during a certain time of the day 
+
+```{r}
+
+hist(cc_data$Time)
+
+```
+
+
+\newpage 
+
+Amount - Most transactions are small amounts 
+
+```{r}
+
+
+hist(cc_data$Amount)
+
+
+```
+
+
+\newpage
+
+Histogram distribution of all variables
+
+
+
+```{r}
+
+
+
+ggplot(gather(cc_data), aes(value)) + 
+    geom_histogram(bins = 10) + 
+    facet_wrap(~key, scales = 'free_x')
+
+
+```
+
+
+
+We do not know what the variables V2 - V28 stand for. They are characteristics of each transaction.
+We still need to know the correlation between the variables. 
+
+\newpage 
+
+Simple correlation matrix 
+
+```{r }
+
+cor_result = rcorr(as.matrix(cc_data))
+
+```
+
+
+
+```{r}
+
+corrplot(cor_result$r, type = "upper", order = "hclust", tl.col = "black", tl.srt = 45)
+
+
+```
+
+The result of the correlation will be used later when using PCA on the high dimensional data set ( 29 variables)
+
+\newpage
+
+ 
+# Decision trees for anomaly detection  
+
+
+Credit card fraud is an anomalous event, we indentify events that don't match the expected pattern. 
+How can decision trees help analyze the events? Decision trees don't make an assumption about the data. They can be used to understand the variables.
+Decision tree is a machine-learning algorithm that can be a classification or regression tree analysis. The decision tree can be represented by graphical representation as a tree with leaves and branches. The leaves are generally the data points and branches are the condition to make decisions for the class data set. 
+rpart() is used to create the decision trees in R.
+The output of rpart shows that a certain combination of variables result in a certain event ( leaf ) 
+
+The root node is the Class label, we then have decision nodes and sub-nodes. 
+
+
+```{r , warning = FALSE}
+
+library(rpart)
+
+#remove Time variable 
+cc_data <- cc_data[-1]
+
+#remove Class variable
+
+cc_data <- cc_data[-31]
+
+#The decision tree performed on the imbalanced dataset 
+#We treat Class as the output variable and V1-V28 and Amount as the input variables  
+#factor the Class variables 
+
+cc_data$Class<-factor(cc_data$Class)
+
+
+treeimb <- rpart(Class ~ ., data = cc_data, method = "class", cp = -1)
+#cp = -1 produces a fully grown tree 
+
+treeimb_simple <- rpart(Class ~ ., data = cc_data, method = "class")
+#removing cp= -1 produces a tree automatically removing the complexities 
+
+#treeimb
+#rpart.plot(treeimb) 
+#rpart.plot(treeimb, extra=2)
+
+fancyRpartPlot(treeimb, caption = NULL , main="Decision Tree Graph fully grown ")
+
+```
+\newpage
+
+
+```{r , warning=FALSE}
+
+fancyRpartPlot(treeimb_simple, caption = NULL , main="Decision Tree Graph keeping most important splits ")
+
+```
+
+
+The algorithm has determined that V17 was the best variable for further analysis. Down the tree,it picks other variables and outputs leafs.
+The entire tree shows the relation,importance of variables,choice of variables which result in a transaction being labeled as Fraud or Normal.
+
+We ran the decision tree on the full dataset , and again removing the complexities, producing the two trees. 
+
+\newpage 
+
+Feature importance 
+
+Using the decision tree with complexities removed, we get the histogram showing feature importance 
+
+
+```{r , warning = FALSE}
+
+imp <- treeimb_simple$variable.importance
+#plot.default(imp)
+df <- data.frame(imp = treeimb_simple$variable.importance)
+df2 <- df %>% 
+  tibble::rownames_to_column() %>% 
+  dplyr::rename("variable" = rowname) %>% 
+  dplyr::arrange(imp) %>%
+  dplyr::mutate(variable = forcats::fct_inorder(variable))
+
+ggplot2::ggplot(df2) +
+  geom_col(aes(x = variable, y = imp),
+           col = "black", show.legend = F) +
+  coord_flip() +
+  scale_fill_grey() +
+  theme_bw()
+
+
+```
+Plot of variable importance 
+
+Without the aid of machine learning, the best way to identify a fraudulent event would be to  hire an investigator to manually monitor the activities on an account.
+Card issuers have fraud investigation departments for this purpose.
+The challenge posed by big data and ever increasing volumes is that issuers need to strategically decide which transactions to investigate.
+The decision tree model comes useful based off some initial features.
+If the bank wants to aggressively investigate transactions, the investigating team can use the output from decision trees.
+
+ 
+\newpage
+
+ 
+# Outlier detection 
+
+In fraud detection we pay special attention to transactions that are different from typical cases.
+We identify suspicious cases.
+Our goal is to detect such transactions as soon as they occur and notify the cardholder.
+For example, when a credit card is compromised, the transaction behaviour is different from normal.
+
+Outlier detection or anomaly detection is the process of finding data objects with behaviours different from normal.
+
+Outlier detection and clustering analysis are related tasks.
+Outlier detection as the first step , captures the exceptional cases.
+
+Noise is not the same as an outlier.
+Noise in a transaction could be an unusually large transaction and detecting nois as outliers could lead to errors or false alarms and losses for the credit card issuer.
+
+Outliers could be 
+-Global, using the whole dataset 
+-Contextual, using certain variable as context 
+-Collective, using a collection of objects as a whole to form an outlier
+
+Approaches for outlier detection are unsupervised ( clustering analysis when we have no prior knowledge of the data and labels ), supervised (modeling using classification on labeled data), semisupervised ( modeling using labeled data that is normalized ) 
+
+Our data does not have labels for the outliers.
+We use the unsupervised approach.
+
+Outlier detection methods could be univariate or multivariate,  parametric(statistical) or non parametric(model free), distance based or clustering techniques). 
+
+The output of the outlier detection can be a label or a score
+
+Using Grubb's test :
+This is a statistical test.
+According to Grubb's, an outlier is one that appears to deviate markedly from other members of the sample.
+Causes of outliers could be Human errors, Instrument errors, Experimental errors,
+Intentional errors, Data processing errors, Sampling errors or Natural.
+
+    
+In our use case, the outliers , faudulent transactions are a natural event, and we are actually exploring the outliers. A customer's purchase behaviour can be modeled as a random variabe. A customer may generate some "noise transactions" which could seem like random errors. Treating them as outliers could prove costly to the bank. 
+
+
+The R outliers package, (https://www.rdocumentation.org/packages/outliers/versions/0.14) has a series of functions that can be used to test for outliers. 
+
+Grubb's test can be used on numerical variables. Our dtaa consistes of numerical variables.
+
+From the histograms, we see the normal patterns in the data.
+
+
+Grubb's test lets us sequentially identify outliers.
+The algorithm first considers the data value with the highest absolute value.
+If the null hypothesis that such a value is not an outlier is rejected, the considered value is detected as an outlier and excluded from further analysis. Subsequently, a value with the second-highest absolute value is considered, and its quality is again evaluated using the Grubbs test. This procedure is repeated until no outlier is detected. 
+
+Thus Grubbs' test assesses whether the value that is farthest from the mean is an outlier - the value could be either the maximum or minimum value. 
+Grubbs test can be run on each variable and a function can be written to automate runnuing the test on each variable. We have 29 variables.
+Grubbs test assumes the data is normally distributed 
+
+\newpage
+
+Performed on one variable V1:
+
+```{r echo = FALSE, warning = FALSE }
+
+library(outliers)
+grubbs.test(cc_data$V1, two.sided = TRUE)
+#identify the point that was tested 
+
+which.min(cc_data$V1)
+which.max(cc_data$V1)
+```
+Grubbs tests can be performed with Type = 10, 11 or 20
+We can specify how we want the outliers detected. 
+
+Various other algorithms can be used for anomaly detection, such as KNN. 
+
+\newpage
+
+# Clustering analysis 
+
+We demonstrate three partitioning methods :
+
+1. Heirarchical clustering
+
+2. Kmeans clustering 
+
+3. Kmedoids clustering 
+
+
+
+
+
+```{r , include = FALSE}
+################################################################################################ Import dataset ############################
+######################################################################
+
+#data=read.csv(file.choose(), header = TRUE, na.strings = c("NA","","#NA"))
+data = read.csv("creditcard.csv")
+raw_data = data[1:10000,]
+
+raw_data$Class = as.factor(raw_data$Class)
+
+```
+
+
+Ingesting the data, we explore the structure and missing values
+
+
+```{r , include = FALSE}
+# Inspect the data
+head(raw_data)
+str(raw_data)
+summary(raw_data)
+
+# Determine the percentage of missing values per column in the data table
+pMiss = function(x){sum(is.na(x))/length(x)*100}
+apply(raw_data,2,pMiss)
+
+```
+
+
+```{r}
+######################################################################################### Hierarchical Clustering ##########################
+######################################################################
+```
+
+\newpage
+
+## Hierarchical Clustering
+
+For simplicity, we conducted clustering analysis on the first 10,000 observations 
+
+Simply stated, clustering is a technique which is used to group similar data points in a manner which leads to all points belonging to the same group to be more similar to each other. Each distinct group of in the data is referred to as a cluster. Hierarchical clustering is one of the more popular clustering techniques and can be subdivided into two categories:
+
+1. Agglomerative
+
+2. Divisive
+
+For agglomerative clustering, each data point is initially considered as an individual cluster. For each iteration, similar clusters are merged until either one or *k* clusters remain. The steps of the agglomerative clustering technique are outlined below:
+
+1. Compute the proximity matrix
+
+2. Let each data point be a cluster
+
+3. Merge the two closest clusters
+
+4. Update the proximity matrix
+
+5. Repeat steps 1-4 until either one or *k* clusters remain
+
+For divise hierarchical clustering, all the data points are initially considered to be a single cluster. For each iteration, data points which are not similar are separated from the original cluster. Once the algorithm has finished running, there will be *k* clusters left.
+
+For the current application, the agglomerative clustering approach was used and we investigated the technique using both the Euclidean and Manhattan method to calculate the distance. Given a set of two points, A and B, whose coordinates are (x1,y1) and (x2,y2) the Euclidean distance can be calculated using the equation below:
+
+
+$$d = \sqrt{(x_2-x_1)^2+(y_2-y_1)^2} $$
+The Manhattan distance can be calculated using the following equation:
+
+$$d = |x_2-x_1|+|y_2-y_1| $$
+
+```{r}
+# Calculating the distance
+
+# Keep only the scaled variables
+scaled_data = raw_data[,-c(1,30,31)]
+# Calculate the euclidean distance
+d_euclidean <- dist(scaled_data,method = "euclidean") #distance matrix
+# Calculate the Manhattan distance
+d_manhattan <- dist(scaled_data,method = "manhattan") #distance matrix
+```
+
+```{r , include = FALSE}
+library(dplyr)
+library(ggplot2)
+```
+
+Using the results from the Euclidean distance proximity matrix, the hierarchical clustering technique was applied and a dendrogram was produced for *k* = 4. 
+
+```{r}
+# Method 1: Euclidean Distance
+
+h_clust1 <- hclust(d_euclidean, method = "ward.D") #clustering
+groups1 <- cutree(h_clust1,k=4)
+plot(h_clust1, main = "Dendrogram of Euclidean Distance") #dendrogram
+rect.hclust(h_clust1, k=4, border="red") 
+```
+
+
+\newpage
+
+Additionally, we can use the clusters to aid in evaluating potential relationships between features in the dataset. This can help us better understand our data. For the current application, we examined the trend between the amount and time variables. The results are shown in the figure below.
+
+```{r}
+# Interpreting the results of Euclidean distance cluster
+class_cl <- mutate(raw_data,cluster = groups1)
+count(class_cl,cluster)
+```
+
+```{r}
+ggplot(class_cl, aes(x=raw_data$Time, y =raw_data$Amount , color = factor(cluster))) + geom_point()
+```
+
+\newpage
+
+Using the results from the Manhattan distance proximity matrix, the hierarchical clustering technique was applied and a dendrogram produced for *k* = 4. 
+
+```{r}
+# Method 2: Manhattan Distance
+
+h_clust2 <- hclust(d_manhattan, method = "ward.D") #clustering
+groups2 <- cutree(h_clust2,k=4)
+plot(h_clust2, main = "Dendrogram of Manhattan Distance") #dendrogram
+rect.hclust(h_clust2, k=4, border="red")
+```
+
+Then, we examined the trend between the amount and time variables, using the clusters. The results are shown in the figure below.
+
+```{r}
+# Interpreting the results of Manhattan distance cluster
+class_cl <- mutate(raw_data,cluster = groups2)
+count(class_cl,cluster)
+```
+
+```{r , include = FALSE }
+ggplot(class_cl, aes(x=raw_data$Time, y =raw_data$Amount , color = factor(cluster))) + geom_point()
+```
+
+
+```{r}
+######################################################################################### K-means Clustering ###############################
+######################################################################
+```
+
+
+\newpage
+
+## K-means Clustering
+
+For simplicity, we conducted clustering analysis on the first 10,000 observations 
+
+K-means clustering is a technique used to partition data into k clusters, where data points in a given cluster are similar and data points in different  are farther apart. The measure of similarity between two points is assessed by determining the distance between them.
+
+
+```{r,echo=FALSE}
+# K-Means
+kclust <- kmeans(scaled_data, 4) # k = 3
+
+#In k.means.fit are contained all the elements of the cluster output:
+attributes(kclust)
+
+# Centroids:
+kclust$centers
+
+# Clusters:
+clusters <- kclust$cluster # save the cluster for later
+
+# Cluster size:
+kclust$size
+```
+
+\newpage 
+
+Determine the number the optimal number of clusters
+
+```{r}
+# Determine the number the optimal number of clusters
+wssplot <- function(data, nc=15, seed=1234){
+  wss <- (nrow(data)-1)*sum(apply(data,2,var))
+  for (i in 2:nc){
+    set.seed(seed)
+    wss[i] <- sum(kmeans(data, centers=i)$withinss)}
+  plot(1:nc, wss, type="b", xlab="Number of Clusters",
+       ylab="Within groups sum of squares")}
+
+wssplot(scaled_data, nc=9) 
+```
+
+\newpage 
+
+Then, we can visualize the clusters using *clusplot*
+
+```{r}
+library(cluster)
+
+clusplot(scaled_data, kclust$cluster, main='2D representation of the Cluster solution', color=TRUE)
+```
+
+\newpage 
+
+Lastly, similar to the approach used in the hierarchical clustering section, we examined the trend between the amount and time variables, using the clusters. The results are shown in the figure below.
+
+```{r}
+class_cl <- mutate(raw_data,clusters)
+
+ggplot(class_cl, aes(x=raw_data$Time, y =raw_data$Amount , color = factor(clusters))) + geom_point()
+
+```
+
+
+\newpage
+
+## k medoids : PAM 
+
+
+```{r include=FALSE }
+library(fpc)
+library(data.table)
+library(ggplot2)
+library(dplyr)
+library(cluster)
+library(corrplot)
+library(ROSE)
+library(ggplot2)
+library(dplyr)
+library(caret)
+library(NbClust)
+```
+
+
+```{r}
+#credit card data
+#originalData<-read.csv(file.choose())
+originalData = read.csv("creditcard.csv")
+```
+
+Load the data 
+```{r}
+creditCardData<-originalData
+```
+
+Data exploration
+No missing data, higly imbalanced data
+```{r include = FALSE}
+head(creditCardData)
+str(creditCardData)
+summary(creditCardData)
+head(creditCardData%>%filter(is.na(creditCardData)))
+hist(creditCardData$Class)
+```
+
+
+
+
+Since the data is imbalanced, we are going to make balanced dataset.
+By making a balanced dataset, we can have a better cluster group.
+
+\newpage
+
+1. under sample the non fraud Data, keeping the existing Fraud Data
+
+```{r}
+library(dplyr)
+nonFraudClassCCD <-  creditCardData %>% 
+  filter(creditCardData$Class==0)
+FraudClassCCD = creditCardData%>%filter(creditCardData$Class==1)
+tempBinded = rbind(nonFraudClassCCD, FraudClassCCD[1, ])
+
+library(caret)
+underSampledNonFraudClassCCDIndice = createDataPartition(tempBinded$Class , p = 0.01, list=FALSE)
+sample = creditCardData[underSampledNonFraudClassCCDIndice, ]
+newData = rbind(sample, FraudClassCCD)
+hist(newData$Class)
+```
+
+
+\newpage
+
+2. Over sampling for Fraud data and save the sampled data
+
+
+```{r}
+library(caret)
+library(ROSE)
+balancedCCD = ovun.sample(Class~., data=newData, method = "over", N=2843*2, seed=198)$data
+hist(balancedCCD$Class)
+#save the balanced data for shiny app
+#write.csv(x=balancedCCD, file="ccd_data.csv")
+
+```
+
+3. Make a copy of test data for cluster evaluation
+
+
+```{r}
+testerBalCCd<-balancedCCD
+```
+
+\newpage
+
+Decision Tree from balanced Dataset
+
+```{r}
+library(rpart)
+library(rpart.plot)
+tempDatasetForBalancedDataTree<-balancedCCD
+tempDatasetForBalancedDataTree$Time<-scale(tempDatasetForBalancedDataTree$Time)
+tempDatasetForBalancedDataTree$Amount<-scale(tempDatasetForBalancedDataTree$Amount)
+
+blcdDsTrResult = rpart(Class~., tempDatasetForBalancedDataTree)
+rpart.plot(blcdDsTrResult)
+```
+
+\newpage
+
+Figure out the important features using decision tree
+
+
+
+```{r}
+set.seed(198)
+tempDataPreprocessing<-creditCardData
+tempDataPreprocessing$Time<-scale(tempDataPreprocessing$Time)
+tempDataPreprocessing$Amount<-scale(tempDataPreprocessing$Amount)
+
+dsTrResult = rpart(Class~., tempDataPreprocessing)
+rpart.plot(dsTrResult)
+```
+
+Time, Amount are not important features according to the decision tree, so we will disregard.
+And the sampled data and its size affects the importance; so for general clustering result, the following will consider the most of the features, except Amount and Time. While several trials were made to check the features' importance, Amount and Time were not included in the importance. And the features existence was not important in the clustering result external evaluation.
+
+```{r , include = FALSE}
+balancedCCD$Time=NULL
+balancedCCD$Amount=NULL
+str(balancedCCD)
+
+```
+
+\newpage
+
+
+
+Find the best cluster number K
+The elbow point is around 4
+
+
+```{r}
+library(NbClust)
+indicesForNbClust<-createDataPartition(balancedCCD$Class , p = 0.1, list=FALSE)
+nbClustSampleData<-balancedCCD[indicesForNbClust, ]
+nc<-NbClust(nbClustSampleData%>%select(-Class), distance="euclidean", min.nc=2, max.nc=15, method="ward.D", index="all")
+```
+
+Use k=4 since it looks the best clustering number
+
+```{r}
+hclust.split.idx<-createDataPartition(balancedCCD$Class , p = 0.1, list=FALSE)
+hclust.data.set<-balancedCCD[hclust.split.idx, ]
+
+ccd.cls.dist = dist(hclust.data.set, method="euclidean")
+ccd.hclust = hclust(ccd.cls.dist, method = "ward.D")
+plot(ccd.hclust,labels=hclust.data.set$Class, main='Heirarchial clustering')
+rect.hclust(ccd.hclust,k=4)
+```
+
+
+\newpage
+
+```{r}
+library(cluster)
+balancedCCD$Class=NULL
+ccd.pam.k4<-pam(balancedCCD, k=4, stand=FALSE)
+clusplot(ccd.pam.k4)
+
+```
+
+
+Cluster VS Actual
+
+```{r}
+cls.result.pam.k4<-ccd.pam.k4$cluster
+cls.result.pam.k4<-as.factor(as.matrix(cls.result.pam.k4))
+cls.result.pam.k4<-ifelse(cls.result.pam.k4==1, 0, 1)
+
+```
+
+\newpage
+
+1. External Accuracy Measures
+
+1) Rand Index - "the ratio of matching and unmatched observations among two clustering structures"
+Higher the value, better the score. 
+
+*RAND SCORE = a + d / (a + b + c + d)
+where
+• a = observations which are available in the same cluster in both structures (C1 and C2)
+• b = observations which are available in a cluster in C1 and not in the same cluster in C2
+• c = observations which are available in a cluster in C2 and not in the same cluster in C1
+• d = observations which are available in different clusters in C1 and C2 
+1) Rand Index
+
+```{r , warning = FALSE}
+#install.packages("fossil")
+library(fossil)
+rindex = rand.index(cls.result.pam.k4, testerBalCCd$Class)
+print(paste("Rand Index:", round(rindex*100, 2), "%"))
+```
+
+
+2) Precision Recall Measure
+
+```{r}
+set.seed(198)
+
+measurePrecisionRecall <- function(clsResult, classVal){
+  prec <- sum(clsResult & classVal) / sum(clsResult)
+  rec <- sum(clsResult & classVal) / sum(classVal)
+  fm <- 2 * prec * rec / (prec + rec)
+  print(paste('Precision:', round(prec*100,2), '%'))
+  print(paste('recall:', round(rec*100, 2), '%'))
+  print(paste('F-measure:', round(fm*100, 2), '%'))
+}
+
+confusionMatrix(as.factor(cls.result.pam.k4), as.factor(testerBalCCd$Class))
+measurePrecisionRecall(as.numeric(cls.result.pam.k4), as.numeric(testerBalCCd$Class))
+
+```
+
+\newpage 
+
+3) ROC, AUC curve
+```{r}
+library (ROCR)
+pred <- prediction(as.numeric(cls.result.pam.k4), as.numeric(testerBalCCd$Class));
+RP.perf <- performance(pred, "prec", "rec");
+plot (RP.perf);
+
+# ROC curve
+ROC.perf <- performance(pred, "tpr", "fpr");
+plot (ROC.perf);
+
+# ROC area under the curve
+auc.tmp <- performance(pred,"auc");
+auc <- as.numeric(auc.tmp@y.values)
+print(paste("Accuracy:", round(auc*100, 2), "%"))
+
+```
+
+
+\newpage
+
+# Using PCA and SVM 
+
+```{r, include = FALSE}
+library(caTools)
+library(stats)
+library(caret)
+library(e1071)
+library(rpart)
+library(rpart.plot)
+library(smotefamily)
+library(ROSE)
+library(pROC)
+library(cluster)
+library(MASS)
+library(kernlab)
+```
+
+Import the orignal data to process PCA and LDA models
+
+```{r}
+data = read.csv("creditcard.csv")
+```
+This is a 2 day credit card transaction record, starting from "0" second to "171792" seconds. The feature of "Time" has not any important value to the target feature. Remove "Time"
+
+```{r}
+data$Time=NULL
+```
+Convert column name" Amount" to "V29" modeling.
+
+```{r}
+colnames(data)[29] = "V29"
+```
+
+Split the data to train and test datasets.
+
+```{r}
+set.seed(123)
+split = sample.split(data$Class, SplitRatio = 0.7)
+train = subset(data, split == TRUE)
+test = subset(data, split == FALSE)
+```
+
+Scale the Amount, V29. 
+```{r}
+train[,29 ] = scale(train[, 29])
+test[,29] = scale(test[,29])
+```
+
+
+```{r}
+prop.table(table(data$Class))
+```
+
+
+
+The dependant variable is an extremely imbalanced. Treat the imbalanced target variable by the method of "both".
+
+```{r}
+trainBalanced = ovun.sample(Class~., data=train, N=nrow(train),method = "both", p=0.5,seed = 1)$data
+```
+
+Make decision tree to check feature important for feature selection
+
+```{r}
+set.seed(123)
+treeModel = rpart(as.factor(Class)~., trainBalanced )
+```
+
+```{r}
+rpart.plot(treeModel)
+```
+
+
+\newpage
+
+```{r}
+prp(treeModel)
+```
+
+
+
+
+V14, V4, V3, V12 contribute 100% variables that affect the target feature, Class. Make a new trainBalanced dataset and test dataset only contains V14,V4,V3,V12 and target variable, V30.
+
+```{r}
+new.trainBalanced = trainBalanced[c(14,4,3,12,30)]
+```
+```{r}
+new.test = test[c(14,4,3,12,30)]
+```
+
+```{r}
+dim(new.trainBalanced)
+dim(new.test)
+```
+
+
+Applying the  decision tree model with the only 5 selected features
+
+```{r}
+new.treeModel = rpart(as.factor(Class)~., new.trainBalanced )
+```
+
+```{r}
+predTree = predict(new.treeModel, test[-5])
+```
+
+```{r}
+y_predTree = ifelse(predTree >0.5, 1, 0)
+```
+
+```{r}
+y_predTree = as.data.frame(y_predTree)
+```
+```{r}
+table(y_predTree$`1`,new.test$Class)
+```
+
+
+## Applying Principal Component Analysis-PCA
+
+Principal Component Analysis-PCA can help for data noise filtering, visualizaion, feature extraction.The target feature , Class , has two levels: "0" and "1". So that we set pcaComp into 2 conponents.
+
+```{r}
+pca = preProcess(new.trainBalanced[-5], "pca", pcaComp = 2)
+```
+```{r}
+trainPca = predict(pca, new.trainBalanced)
+```
+```{r}
+trainPca = trainPca[c(2,3,1)]
+head(trainPca)
+```
+
+
+```{r}
+testPca = predict(pca,new.test)
+testPca = testPca[c(2,3,1)]
+head(testPca)
+```
+
+
+
+## Using PCA to apply decision tree model
+
+```{r}
+pca.treeModel = rpart(as.factor(Class)~., trainPca )
+```
+
+```{r}
+pca.predTree = predict(pca.treeModel, testPca[-5])
+```
+
+```{r}
+y_pca.predTree = ifelse(pca.predTree >0.5, 1, 0)
+```
+
+
+```{r}
+y_pca.predTree = as.data.frame(y_pca.predTree)
+```
+```{r}
+table(y_pca.predTree$`1`,testPca$Class)
+```
+
+\newpage
+
+## Comparing the decision tree model before after PCA
+
+```{r}
+roc.curve(new.test$Class, y_predTree$`1`)
+roc.curve(testPca$Class, y_pca.predTree$`1`)
+```
+
+The PCA get better AUC, however the True posicive rate are almost the same.
+
+```{r}
+accuracy.meas(as.factor(new.test$Class), y_predTree$`1`)
+```
+
+```{r}
+accuracy.meas(as.factor(testPca$Class), y_pca.predTree$`1`)
+```
+
+The PCA decision tree has better AUC, however still not very good model.
+
+\newpage
+
+## Applying Linear Discriminant Analysis Lda model
+
+Pca is an unsupervised machine learning technique, however since our data has already shows the target variable so that we can apply Linear Discrininant Analysis_Lda model which is a kind of supervised machine learning technique. Lda can maximize the space for the class-seperation, for a better classification. We will use back the firt training and testing datasets.
+
+
+```{r}
+lda = lda(Class ~., train)
+```
+
+```{r}
+trainlda = as.data.frame(predict(lda,train))
+```
+```{r}
+head(trainlda)
+```
+
+
+Because we have 2 levels of the target variable, so we get one LD1. We don't need the posterior.0 and posterior.1 for the prediction. 
+
+```{r}
+trainlda = trainlda[c(4,1)]
+```
+```{r}
+head(trainlda)
+```
+
+So the same to the test dataset to LDA. 
+```{r}
+testlda = as.data.frame(predict(lda,test))
+```
+
+```{r}
+testlda= testlda[c(4,1)]
+head(testlda)
+```
+
+\newpage
+
+Apply LDA to SVM model. 
+
+```{r}
+set.seed(123)
+ldaModel = svm(class~., trainlda, type = "C-classification", kernel = "radial")
+```
+
+```{r}
+lda_pred = predict(ldaModel, testlda[-2])
+```
+```{r}
+table(testlda[,2], lda_pred)
+```
+
+```{r}
+set.seed(123)
+confusionMatrix(lda_pred, testlda$class, positive = "1")
+```
+
+
+We get 100% Accuracy, 100% Sensitivity and 99.99% Specificity which means we get a perfect model to detect the fraud.
+
+\newpage
+
+```{r}
+roc.curve(testlda$class, lda_pred)
+```
+
+We thus recommend the LDA SVM model.
+
+\newpage
+
+# Clustering analysis deployment
+
+We deployed the Kmeans Kmedoids models and shared them at shinyapps.io.
+
+https://ml-lab.shinyapps.io/creditCardDataClustering/
+
+Due to limitations of the free account, we were unable to load the entire data and decided to demonstrate the models using a subset of the data.
+
+
+# Conclusion 
+
+We have demonstrated use of Kmeans and Kmedoids , which are clustering techniques suitable for data with dimensions less than 10 in general.
+We also demonstrated using decision trees and PCA for dimensionality reduction.
+This technique can be used effectively perform cluster analysis on highly dimensional datasets.
+
+Github link to the project: https://github.com/csml1000groupc/UnsupervisedLearning_CreditCardFraud
+
+# Bibliography 
+
+https://worldpaymentsreport.com/#
+
+https://www.mckinsey.com/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
