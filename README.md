@@ -6,7 +6,7 @@ Project Title - Unsupervised learning approach to Credit card Fraud
 ## Project Structure
 
 * Project presentation document: **CSML1000_Assignment_Two-GroupC.pdf.pdf**.  
-* **data** folder contains the data.txt having the link redirecting to the entire dataset used for the project.
+* **data** folder contains the "data" having the link redirecting to the entire dataset used for the project.
 * **source** folder contains the Rmd file generating the report.
 * **shinyApp** folder includes the shiny app source code and the models trained in local environment.
 
