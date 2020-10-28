@@ -13,7 +13,7 @@ Project Title - Unsupervised learning approach to Credit card Fraud
 To run the project code:
 
 * set the working directory to *./source*
-* open *<>*. Please make sure that you install all required library; they are listed at the beginning of the file. It is assumed that all R Markdown dependencies are satisfied, including the libraries that do conversion to the *PDF* format. Execute the script.
+* open *CSML1000_Assignment_Two-GroupC.Rmd*. Please make sure that you install all required library; they are listed at the beginning of the file. It is assumed that all R Markdown dependencies are satisfied, including the libraries that do conversion to the *PDF* format. Execute the script.
 
 
 ## Shiny App
